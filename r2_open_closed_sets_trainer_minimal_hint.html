@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R²の開集合・閉集合トレーナー（距離ガイド付き）</title>
+<style>
+:root{
+  --bg:#f7f7fb;--card:#fff;--ink:#1d2433;--muted:#667085;
+  --blue:#2563eb;--red:#dc2626;--green:#16a34a;--violet:#7c3aed;--gold:#d97706;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  line-height:1.65;padding-bottom:max(20px,env(safe-area-inset-bottom));
+}
+.wrap{max-width:1240px;margin:22px auto;padding:0 14px}
+h1{font-size:27px;line-height:1.3;margin:0 0 8px}
+h2{font-size:20px;margin:0 0 8px}
+p{margin:0 0 10px}
+.lead{color:var(--muted);font-size:14px}
+.grid{display:grid;grid-template-columns:1fr 380px;gap:16px;align-items:start}
+.card{
+  background:#fff;border:1px solid #e5e7eb;border-radius:18px;
+  box-shadow:0 12px 28px rgba(17,24,39,.08);padding:16px;overflow:hidden;
+}
+svg.graph{display:block;width:100%;height:auto;border:1px solid #e5e7eb;border-radius:16px;background:#fff;touch-action:manipulation}
+label{display:block;font-size:13px;font-weight:800;margin:10px 0 5px}
+select,button,input[type=range]{width:100%}
+select,button{
+  min-height:44px;border:1px solid #d0d5dd;border-radius:12px;background:#fff;
+  color:var(--ink);font-size:15px;padding:10px 12px;
+}
+button{font-weight:800;cursor:pointer}
+button.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.row{display:flex;gap:10px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.row>*{flex:1}
+input[type=range]{accent-color:var(--blue);height:36px}
+.value{font-variant-numeric:tabular-nums;font-weight:800;min-width:74px;text-align:right;flex:0!important}
+.status{
+  margin-top:12px;padding:13px 14px;border:1px solid #e5e7eb;border-radius:14px;
+  background:#f9fafb;font-weight:800;line-height:1.55;
+}
+.status.ok{background:#ecfdf3;border-color:#bbf7d0;color:#166534}
+.status.ng{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+.status.bad{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+.small{font-size:12px;color:var(--muted);line-height:1.55}
+.formula{
+  font-family:"Times New Roman",serif;background:#f8fafc;border:1px solid #e5e7eb;
+  border-radius:12px;padding:10px 12px;font-size:18px;margin-top:12px;
+}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.chip{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+.sw{width:18px;height:12px;border-radius:4px;border:1px solid rgba(0,0,0,.08)}
+.sw.set{background:#dbeafe}.sw.ball{background:#dcfce7}.sw.fail{background:#fee2e2}
+.sw.p{background:#111}.sw.guide{background:#fef3c7}.sw.wit{background:#ede9fe}
+.panelbox{background:#fcfcfd;border:1px solid #e5e7eb;border-radius:14px;padding:12px 14px;margin-top:12px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 10px;font-size:14px;align-items:center}
+.kv div:nth-child(odd){font-weight:800}
+.mono{font-family:"Times New Roman",serif}
+@media(max-width:920px){
+  .grid{grid-template-columns:1fr}
+  h1{font-size:23px}
+  .wrap{margin:14px auto;padding:0 12px}
+  .card{padding:13px}
+  select,button{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>R²の開集合・閉集合トレーナー（距離ガイド付き）</h1>
+  <p class="lead">
+    点 <span class="mono">p</span> を選び、半径 <span class="mono">r</span> の近傍 <span class="mono">B(p,r)</span> が集合の中に収まるかを試します。
+    開集合の例では、<b>境界までの距離</b>を補助線で可視化します。
+  </p>
+
+  <div class="grid">
+    <div class="card">
+      <svg id="graph" class="graph" viewBox="0 0 720 720"></svg>
+      <div class="legend">
+        <div class="chip"><span class="sw set"></span>集合</div>
+        <div class="chip"><span class="sw.ball sw ball"></span>近傍 <span class="mono">B(p,r)</span></div>
+        <div class="chip"><span class="sw p"></span>中心点 <span class="mono">p</span></div>
+        <div class="chip"><span class="sw fail"></span>はみ出す点</div>
+        <div class="chip"><span class="sw guide"></span>境界までの距離のガイド</div>
+        <div class="chip"><span class="sw wit"></span>r = d/2 <span class="mono">r=d/2</span></div>
+      </div>
+      <p class="small" style="margin-top:10px">図をタップ/クリックすると点 <span class="mono">p</span> を動かせます。</p>
+    </div>
+
+    <div class="card">
+      <h2>操作</h2>
+
+      <label for="setSelect">集合の例</label>
+      <select id="setSelect">
+        <optgroup label="開集合：内点なら小さい近傍が入る">
+          <option value="openDisk" selected>開円板：x²+y²&lt;1</option>
+          <option value="openAnnulus">開円環：0.55&lt;√(x²+y²)&lt;1.35</option>
+          <option value="openUnion">開集合の和：2つの開円板の合併</option>
+          <option value="openHalf">開半平面：y&gt;0</option>
+          <option value="openSquare">開正方形：|x|&lt;1, |y|&lt;0.8</option>
+        </optgroup>
+        <optgroup label="閉集合の境界：どんな近傍もはみ出る">
+          <option value="closedDiskBoundary">閉円板の境界：x²+y²≤1 の境界点</option>
+          <option value="closedHalfBoundary">閉半平面の境界：y≤0 の境界点</option>
+          <option value="closedSquareBoundary">閉正方形の境界点</option>
+          <option value="circleSet">閉集合：単位円周そのもの</option>
+          <option value="segmentSet">閉集合：線分 [-1.3,1.3]×{0}</option>
+        </optgroup>
+      </select>
+
+      <div class="row">
+        <button id="randomPoint" class="primary">この集合らしい点をランダムに選ぶ</button>
+        <button id="proofRadius">r = d/2 にする</button>
+      </div>
+
+      <label>半径 r <span id="rVal" class="value"></span></label>
+      <input id="radius" type="range" min="0.02" max="1.2" step="0.01" value="0.25">
+
+      <div class="row">
+        <div>
+          <label>p の x 座標</label>
+          <input id="pxSlider" type="range" min="-2" max="2" step="0.01" value="0.35">
+        </div>
+        <div class="value" id="pxVal">0.35</div>
+      </div>
+      <div class="row">
+        <div>
+          <label>p の y 座標</label>
+          <input id="pySlider" type="range" min="-2" max="2" step="0.01" value="0.20">
+        </div>
+        <div class="value" id="pyVal">0.20</div>
+      </div>
+
+      <div id="status" class="status"></div>
+      <div class="formula" id="formulaBox"></div>
+
+      <div class="panelbox">
+        <h2>距離ガイド</h2>
+        <div id="guidePanel" class="small"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("graph");
+  const setSelect = document.getElementById("setSelect");
+  const radius = document.getElementById("radius");
+  const rVal = document.getElementById("rVal");
+  const pxSlider = document.getElementById("pxSlider");
+  const pySlider = document.getElementById("pySlider");
+  const pxVal = document.getElementById("pxVal");
+  const pyVal = document.getElementById("pyVal");
+  const status = document.getElementById("status");
+  const formulaBox = document.getElementById("formulaBox");
+  const guidePanel = document.getElementById("guidePanel");
+
+  const W = 720, H = 720;
+  const xmin=-2.1, xmax=2.1, ymin=-2.1, ymax=2.1;
+  const cx = x => (x-xmin)/(xmax-xmin)*W;
+  const cy = y => H - (y-ymin)/(ymax-ymin)*H;
+  const ux = X => xmin + X/W*(xmax-xmin);
+  const uy = Y => ymin + (H-Y)/H*(ymax-ymin);
+  const ur = r => Math.abs(cx(r)-cx(0));
+
+  function E(name, attrs={}, parent=svg){
+    const e = document.createElementNS(NS, name);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    parent.appendChild(e);
+    return e;
+  }
+  function text(str,x,y,attrs={}){
+    const t=E("text",{x,y,"font-size":attrs.size||16,"font-family":attrs.font||"Times New Roman","text-anchor":attrs.anchor||"middle",fill:attrs.fill||"#111"});
+    t.textContent=str; return t;
+  }
+  function fmt(x){ return (Math.round(x*100)/100).toFixed(2); }
+  function fmt3(x){ return (Math.round(x*1000)/1000).toFixed(3); }
+  function norm(p){ return Math.hypot(p.x,p.y); }
+  function rand(a,b){ return a + Math.random()*(b-a); }
+  function pointDist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+
+  function circle(x,y,r,fill,stroke,dash,width=2){
+    const attrs={cx:cx(x),cy:cy(y),r:ur(r),fill:fill||"none"};
+    if(stroke){ attrs.stroke=stroke; attrs["stroke-width"]=width; }
+    if(dash) attrs["stroke-dasharray"]=dash;
+    E("circle",attrs);
+  }
+  function rect(x,y,w,h,fill,stroke,dash){
+    const attrs={x:cx(x),y:cy(y+h),width:ur(w),height:ur(h),fill:fill||"none"};
+    if(stroke){ attrs.stroke=stroke; attrs["stroke-width"]=2; }
+    if(dash) attrs["stroke-dasharray"]=dash;
+    E("rect",attrs);
+  }
+  function line(x1,y1,x2,y2,stroke,dash,width=1.8){
+    const attrs={x1:cx(x1),y1:cy(y1),x2:cx(x2),y2:cy(y2),stroke:stroke,"stroke-width":width};
+    if(dash) attrs["stroke-dasharray"]=dash;
+    E("line",attrs);
+  }
+  function point(x,y,fill="#111",r=5){
+    E("circle",{cx:cx(x),cy:cy(y),r,fill,stroke:"#fff","stroke-width":2});
+  }
+
+  function diskGuide(p,c,R){
+    const dx=p.x-c.x, dy=p.y-c.y, m=Math.hypot(dx,dy);
+    if(m<1e-8){
+      const q={x:c.x+R,y:c.y};
+      return {distance:R, boundary:q, reason:`境界までの距離 d = ${fmt3(R)} = ${fmt3(R)} - 0`};
+    }
+    const q={x:c.x + R*dx/m, y:c.y + R*dy/m};
+    return {distance:Math.max(0,R-m), boundary:q, center:c, reason:`境界までの距離 d = ${fmt3(R)} - ||p-c|| = ${fmt3(R-m)}`};
+  }
+
+  function nearestSquareGuide(p,ax,ay){
+    const vals = [
+      {d: ax - Math.abs(p.x), q:{x: Math.sign(p.x||1)*ax, y:p.y}, label:`${fmt3(ax)}-|x|`},
+      {d: ay - Math.abs(p.y), q:{x: p.x, y:Math.sign(p.y||1)*ay}, label:`${fmt3(ay)}-|y|`}
+    ];
+    vals.sort((u,v)=>u.d-v.d);
+    return {distance:Math.max(0,vals[0].d), boundary:vals[0].q, reason:`境界までの距離 d = min(${fmt3(ax)}-|x|, ${fmt3(ay)}-|y|) = ${fmt3(vals[0].d)}`};
+  }
+
+  const examples = {
+    openDisk: {
+      title:"開円板 G={x²+y²<1}",
+      formula:"G = { (x,y) : x²+y² < 1 }",
+      type:"open",
+      inside:p => p.x*p.x+p.y*p.y < 1,
+      safe:p => Math.max(0, 1 - norm(p)),
+      random:() => { const t=rand(0,Math.PI*2), r=Math.sqrt(Math.random())*0.78; return {x:r*Math.cos(t), y:r*Math.sin(t)}; },
+      explain:"点 p が開円板の内側にあるなら、境界までの距離 d=1-||p|| が正になる。 ε=d/2 と置くのが典型的。",
+      draw:() => { circle(0,0,1,"rgba(37,99,235,.16)","#2563eb","7 6"); point(0,0,"#2563eb",4); text("中心",cx(0)+15,cy(0)-12,{size:13,anchor:"start",fill:"#2563eb",font:"sans-serif"}); },
+      guide:p => diskGuide(p,{x:0,y:0},1),
+      guideText:(p,g)=>`<div class="kv">
+        <div>目安</div><div>円板の境界までの距離を見る</div>
+        <div>可視化</div><div>中心 O と p を結ぶ方向に、p から境界までの黄色線が d</div>
+        <div>距離 d</div><div class="mono">d = 1 - ||p|| = ${fmt3(g.distance)}</div>
+        <div>取りやすい半径</div><div class="mono">r = d/2 = ${fmt3(g.distance/2)}</div>
+      </div>`
+    },
+    openAnnulus: {
+      title:"開円環 G={0.55<||x||<1.35}",
+      formula:"G = { (x,y) : 0.55 < √(x²+y²) < 1.35 }",
+      type:"open",
+      inside:p => { const r=norm(p); return 0.55 < r && r < 1.35; },
+      safe:p => { const r=norm(p); return (0.55 < r && r < 1.35) ? Math.min(r-0.55,1.35-r) : 0; },
+      random:() => { const t=rand(0,Math.PI*2), r=rand(0.72,1.18); return {x:r*Math.cos(t), y:r*Math.sin(t)}; },
+      explain:"開円環では内側・外側の2つの境界のうち、近い方までの距離を見る。その半分を半径にすればよい。",
+      draw:() => { circle(0,0,1.35,"rgba(37,99,235,.16)","#2563eb","7 6"); circle(0,0,0.55,"#fff","#2563eb","7 6"); },
+      guide:p => {
+        const r=norm(p);
+        if(!(0.55<r && r<1.35)) return null;
+        const outer = diskGuide(p,{x:0,y:0},1.35);
+        const innerBoundary = {x:0.55*p.x/r, y:0.55*p.y/r};
+        const inner = {distance:r-0.55, boundary:innerBoundary};
+        return inner.distance < outer.distance ? {distance:inner.distance, boundary:inner.boundary, reason:`d = min(||p||-0.55, 1.35-||p||) = ${fmt3(inner.distance)}`} : {distance:outer.distance, boundary:outer.boundary, reason:`d = min(||p||-0.55, 1.35-||p||) = ${fmt3(outer.distance)}`};
+      },
+      guideText:(p,g)=>`<div class="kv">
+        <div>目安</div><div>内側境界と外側境界の近い方までの距離を見る</div>
+        <div>距離 d</div><div class="mono">${g.reason}</div>
+        <div>取りやすい半径</div><div class="mono">r = d/2 = ${fmt3(g.distance/2)}</div>
+      </div>`
+    },
+    openUnion: {
+      title:"2つの開円板の合併",
+      formula:"G = B((-0.65,0),0.8) ∪ B((0.65,0.15),0.75)",
+      type:"open",
+      disks:[{x:-0.65,y:0,r:0.8},{x:0.65,y:0.15,r:0.75}],
+      inside:p => Math.hypot(p.x+0.65,p.y) < 0.8 || Math.hypot(p.x-0.65,p.y-0.15) < 0.75,
+      safe:p => Math.max(0, 0.8-Math.hypot(p.x+0.65,p.y), 0.75-Math.hypot(p.x-0.65,p.y-0.15)),
+      random:() => { const d = Math.random()<.5 ? {x:-0.65,y:0,r:0.55} : {x:0.65,y:0.15,r:0.52}; const t=rand(0,Math.PI*2), r=Math.sqrt(Math.random())*d.r; return {x:d.x+r*Math.cos(t),y:d.y+r*Math.sin(t)}; },
+      explain:"開集合の和は開集合。p を含む1つの開円板を見つけ、その中で境界までの距離を考えればよい。",
+      draw:() => { circle(-0.65,0,0.8,"rgba(37,99,235,.16)","#2563eb","7 6"); circle(0.65,0.15,0.75,"rgba(37,99,235,.16)","#2563eb","7 6"); },
+      guide:p => {
+        const g1 = diskGuide(p,{x:-0.65,y:0},0.8), in1 = Math.hypot(p.x+0.65,p.y) < 0.8;
+        const g2 = diskGuide(p,{x:0.65,y:0.15},0.75), in2 = Math.hypot(p.x-0.65,p.y-0.15) < 0.75;
+        if(in1 && in2) return g1.distance >= g2.distance ? {...g1,name:"左の円板"} : {...g2,name:"右の円板"};
+        if(in1) return {...g1,name:"左の円板"};
+        if(in2) return {...g2,name:"右の円板"};
+        return null;
+      },
+      guideText:(p,g)=>`<div class="kv">
+        <div>目安</div><div>p を含む1つの開円板に着目する</div>
+        <div>使う円板</div><div>${g.name}</div>
+        <div>距離 d</div><div class="mono">${g.reason}</div>
+        <div>取りやすい半径</div><div class="mono">r = d/2 = ${fmt3(g.distance/2)}</div>
+      </div>`
+    },
+    openHalf: {
+      title:"開半平面 G={y>0}",
+      formula:"G = { (x,y) : y > 0 }",
+      type:"open",
+      inside:p => p.y > 0,
+      safe:p => Math.max(0,p.y),
+      random:() => ({x:rand(-1.5,1.5), y:rand(0.25,1.5)}),
+      explain:"点 p=(a,b) が y>0 にあるなら、境界線 y=0 までの距離は b。 ε=b/2 と置けばよい。",
+      draw:() => { rect(xmin,0,xmax-xmin,ymax,"rgba(37,99,235,.14)",null); line(xmin,0,xmax,0,"#2563eb","7 6",2); },
+      guide:p => ({distance:Math.max(0,p.y), boundary:{x:p.x,y:0}, reason:`d = y座標 = ${fmt3(p.y)}`}),
+      guideText:(p,g)=>`<div class="kv">
+        <div>目安</div><div>境界線 y=0 までの鉛直距離を見る</div>
+        <div>距離 d</div><div class="mono">d = p の y座標 = ${fmt3(g.distance)}</div>
+        <div>取りやすい半径</div><div class="mono">r = d/2 = ${fmt3(g.distance/2)}</div>
+      </div>`
+    },
+    openSquare: {
+      title:"開正方形 G={|x|<1, |y|<0.8}",
+      formula:"G = { (x,y) : |x| < 1, |y| < 0.8 }",
+      type:"open",
+      inside:p => Math.abs(p.x)<1 && Math.abs(p.y)<0.8,
+      safe:p => (Math.abs(p.x)<1 && Math.abs(p.y)<0.8) ? Math.min(1-Math.abs(p.x),0.8-Math.abs(p.y)) : 0,
+      random:() => ({x:rand(-0.75,0.75), y:rand(-0.55,0.55)}),
+      explain:"各辺までの距離のうち最小のものが境界までの距離 d。 ε=d/2 と置けばよい。",
+      draw:() => { rect(-1,-0.8,2,1.6,"rgba(37,99,235,.16)","#2563eb","7 6"); },
+      guide:p => nearestSquareGuide(p,1,0.8),
+      guideText:(p,g)=>`<div class="kv">
+        <div>目安</div><div>4本の辺のうち最も近い辺までの距離を見る</div>
+        <div>距離 d</div><div class="mono">${g.reason}</div>
+        <div>取りやすい半径</div><div class="mono">r = d/2 = ${fmt3(g.distance/2)}</div>
+      </div>`
+    },
+    closedDiskBoundary: {
+      title:"閉円板の境界点",
+      formula:"F = { (x,y) : x²+y² ≤ 1 }, p は境界 x²+y²=1 上",
+      type:"boundary",
+      inside:p => p.x*p.x+p.y*p.y <= 1,
+      safe:p => 0,
+      random:() => { const t=rand(0,Math.PI*2); return {x:Math.cos(t), y:Math.sin(t)}; },
+      explain:"閉円板そのものは閉集合だが、境界点は内点ではない。どんな r>0 に対しても B(p,r) は外にはみ出す。",
+      draw:() => { circle(0,0,1,"rgba(37,99,235,.16)","#2563eb",null); },
+      guide:p => null,
+      guideText:()=>`<b>ガイドなし：</b> ここは境界点なので、内点を示すための正の距離 d は存在しません。`
+    },
+    closedHalfBoundary: {
+      title:"閉半平面の境界点",
+      formula:"F = { (x,y) : y ≤ 0 }, p は境界 y=0 上",
+      type:"boundary",
+      inside:p => p.y <= 0,
+      safe:p => 0,
+      random:() => ({x:rand(-1.5,1.5), y:0}),
+      explain:"境界 y=0 上では、どんな半径の近傍も上側 y>0 にはみ出す。",
+      draw:() => { rect(xmin,ymin,xmax-xmin,0-ymin,"rgba(37,99,235,.14)",null); line(xmin,0,xmax,0,"#2563eb",null,2.5); },
+      guide:p => null,
+      guideText:()=>`<b>ガイドなし：</b> 境界点なので d=0 です。正の半径を取る余地はありません。`
+    },
+    closedSquareBoundary: {
+      title:"閉正方形の境界点",
+      formula:"F = { (x,y) : |x|≤1, |y|≤0.8 }, p は境界上",
+      type:"boundary",
+      inside:p => Math.abs(p.x)<=1 && Math.abs(p.y)<=0.8,
+      safe:p => 0,
+      random:() => { const s=Math.floor(Math.random()*4); if(s===0)return {x:rand(-1,1),y:0.8}; if(s===1)return {x:rand(-1,1),y:-0.8}; if(s===2)return {x:1,y:rand(-0.8,0.8)}; return {x:-1,y:rand(-0.8,0.8)}; },
+      explain:"境界上ではどんな近傍も正方形の外に出る。閉集合に属していても、内点とは限らない。",
+      draw:() => { rect(-1,-0.8,2,1.6,"rgba(37,99,235,.16)","#2563eb",null); },
+      guide:p => null,
+      guideText:()=>`<b>ガイドなし：</b> 内点ではないので、境界までの正の余裕はありません。`
+    },
+    circleSet: {
+      title:"単位円周そのもの",
+      formula:"F = { (x,y) : x²+y² = 1 }",
+      type:"thin",
+      inside:p => Math.abs(Math.hypot(p.x,p.y)-1) < 0.015,
+      safe:p => 0,
+      random:() => { const t=rand(0,Math.PI*2); return {x:Math.cos(t), y:Math.sin(t)}; },
+      explain:"円周は閉集合だが、R² の中では厚みをもたない。どんな点でも近傍は円周から外にはみ出す。",
+      draw:() => { circle(0,0,1,"none","#2563eb",null,4); },
+      guide:p => null,
+      guideText:()=>`<b>ガイドなし：</b> 円周には R² の意味での内点がありません。`
+    },
+    segmentSet: {
+      title:"線分 [-1.3,1.3]×{0}",
+      formula:"F = [-1.3,1.3] × {0}",
+      type:"thin",
+      inside:p => Math.abs(p.y)<0.015 && -1.3<=p.x && p.x<=1.3,
+      safe:p => 0,
+      random:() => ({x:rand(-1.15,1.15),y:0}),
+      explain:"線分も R² では厚みをもたない閉集合。線分上の点を中心にした近傍は必ず上下にはみ出す。",
+      draw:() => { line(-1.3,0,1.3,0,"#2563eb",null,5); point(-1.3,0,"#2563eb",4); point(1.3,0,"#2563eb",4); },
+      guide:p => null,
+      guideText:()=>`<b>ガイドなし：</b> 線分には R² の意味での内点がありません。`
+    }
+  };
+
+
+  function minimalGuideHTML(g){
+    if(!g || !(g.distance>0)){
+      return `<div class="kv">
+        <div>d</div><div class="mono">0</div>
+        <div>r</div><div class="mono">${fmt3(parseFloat(radius.value))}</div>
+        <div>判定</div><div class="mono">r > 0</div>
+      </div>`;
+    }
+    const rr = g.distance/2;
+    const cur = parseFloat(radius.value);
+    return `<div class="kv">
+      <div>d</div><div class="mono">${fmt3(g.distance)}</div>
+      <div>d/2</div><div class="mono">${fmt3(rr)}</div>
+      <div>r</div><div class="mono">${fmt3(cur)}</div>
+      <div>判定</div><div class="mono">${cur < g.distance ? "r < d" : "r ≥ d"}</div>
+    </div>`;
+  }
+
+  function getP(){ return {x:parseFloat(pxSlider.value), y:parseFloat(pySlider.value)}; }
+  function setP(p){ pxSlider.value=fmt(p.x); pySlider.value=fmt(p.y); draw(); }
+
+  function witness(p,r,ex){
+    for(let rr of [0.35,0.55,0.75,0.92]){
+      for(let i=0;i<96;i++){
+        const t=2*Math.PI*i/96;
+        const q={x:p.x+r*rr*Math.cos(t), y:p.y+r*rr*Math.sin(t)};
+        if(!ex.inside(q)) return q;
+      }
+    }
+    return {x:p.x+r*0.8,y:p.y};
+  }
+
+  function drawGrid(){
+    E("rect",{x:0,y:0,width:W,height:H,fill:"#fff"});
+    for(let v=-2; v<=2.001; v+=0.5){
+      line(v,ymin,v,ymax,"#eef2f7",null,1);
+      line(xmin,v,xmax,v,"#eef2f7",null,1);
+    }
+    line(xmin,0,xmax,0,"#111827",null,1.3);
+    line(0,ymin,0,ymax,"#111827",null,1.3);
+    for(let v=-2; v<=2.001; v+=1){
+      text(String(v),cx(v),cy(0)+18,{size:12,fill:"#667085"});
+      if(v!==0) text(String(v),cx(0)-14,cy(v)+4,{size:12,fill:"#667085",anchor:"end"});
+    }
+    text("x",W-18,cy(0)-8,{size:17});
+    text("y",cx(0)+14,18,{size:17});
+  }
+
+  function drawGuide(ex,p){
+    const g = ex.guide ? ex.guide(p) : null;
+    if(!g || !(g.distance>0)) return g;
+
+    line(p.x,p.y,g.boundary.x,g.boundary.y,"#d97706","8 6",3);
+    point(g.boundary.x,g.boundary.y,"#d97706",5);
+    text("境界",cx(g.boundary.x)+12,cy(g.boundary.y)-10,{size:13,anchor:"start",fill:"#d97706",font:"sans-serif"});
+
+    const mid = {x:(p.x+g.boundary.x)/2, y:(p.y+g.boundary.y)/2};
+    const distLabel = `d=${fmt3(g.distance)}`;
+    text(distLabel,cx(mid.x)+10,cy(mid.y)-10,{size:14,anchor:"start",fill:"#d97706",font:"sans-serif"});
+
+    const rr = g.distance/2;
+    if(rr>0){
+      circle(p.x,p.y,rr,"rgba(124,58,237,.08)","#7c3aed","6 5",2);
+      text("r=d/2",cx(p.x)+ur(rr)+8,cy(p.y)-6,{size:13,anchor:"start",fill:"#7c3aed",font:"sans-serif"});
+    }
+    return g;
+  }
+
+  function draw(){
+    const key=setSelect.value, ex=examples[key], p=getP(), r=parseFloat(radius.value);
+    rVal.textContent=fmt(r); pxVal.textContent=fmt(p.x); pyVal.textContent=fmt(p.y);
+    svg.innerHTML="";
+    drawGrid();
+    ex.draw();
+
+    const safe = ex.safe(p);
+    const isInside = ex.inside(p);
+    const ballOK = isInside && r <= safe + 1e-9 && (ex.type==="open" ? safe > 0 : false);
+
+    const g = drawGuide(ex,p);
+
+    circle(p.x,p.y,r,ballOK ? "rgba(22,163,74,.14)" : "rgba(220,38,38,.12)",ballOK ? "#16a34a" : "#dc2626",null,2.5);
+    point(p.x,p.y,"#111",6);
+    text("p",cx(p.x)+14,cy(p.y)-12,{size:18,anchor:"start"});
+
+    if(!ballOK){
+      const q=witness(p,r,ex);
+      point(q.x,q.y,"#dc2626",6);
+      text("外にはみ出す点",cx(q.x)+12,cy(q.y)-10,{size:13,fill:"#dc2626",anchor:"start",font:"sans-serif"});
+    }
+
+    formulaBox.innerHTML = `<b>${ex.title}</b><br><span class="mono">${ex.formula}</span>`;
+
+    if(ex.type==="open"){
+      if(!isInside){
+        status.className="status bad";
+        status.innerHTML=`p ∉ G`;
+      }else if(ballOK){
+        status.className="status ok";
+        status.innerHTML=`OK：B(p,r) ⊂ G<br><span class="small">d = ${fmt3(safe)},　r = ${fmt3(r)}</span>`;
+      }else{
+        status.className="status ng";
+        status.innerHTML=`NG：B(p,r) ⊄ G<br><span class="small">d = ${fmt3(safe)},　r = ${fmt3(r)}</span>`;
+      }
+      guidePanel.innerHTML = minimalGuideHTML(g);
+    }else{
+      status.className="status bad";
+      status.innerHTML=`境界点・薄い閉集合上の点では、どんなに小さい r>0 でも B(p,r) は集合の外にはみ出します。<br><span class="small">閉集合は「各点の近傍が中に入る」という意味ではありません。ここが開集合との違いです。</span>`;
+      guidePanel.innerHTML = minimalGuideHTML(null);
+    }
+  }
+
+  document.getElementById("randomPoint").addEventListener("click",()=>setP(examples[setSelect.value].random()));
+  document.getElementById("proofRadius").addEventListener("click",()=>{
+    const ex=examples[setSelect.value], p=getP(), s=ex.safe(p);
+    radius.value=s>0 ? Math.max(0.02, Math.min(1.2, s/2)).toFixed(2) : "0.12";
+    draw();
+  });
+  [setSelect,radius,pxSlider,pySlider].forEach(el=>el.addEventListener("input",()=>{
+    if(el===setSelect){
+      const p=examples[setSelect.value].random();
+      pxSlider.value=fmt(p.x); pySlider.value=fmt(p.y);
+      radius.value = examples[setSelect.value].type==="open" ? "0.25" : "0.22";
+    }
+    draw();
+  }));
+
+  svg.addEventListener("pointerdown",(ev)=>{
+    const rect=svg.getBoundingClientRect();
+    const X=(ev.clientX-rect.left)/rect.width*W;
+    const Y=(ev.clientY-rect.top)/rect.height*H;
+    setP({x:ux(X), y:uy(Y)});
+  });
+
+  const p0=examples[setSelect.value].random();
+  pxSlider.value=fmt(p0.x); pySlider.value=fmt(p0.y);
+  draw();
+})();
+</script>
+</body>
+</html>
