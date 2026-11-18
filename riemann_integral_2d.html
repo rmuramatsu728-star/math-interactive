@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>柱で見る二変数関数の積分</title>
+<style>
+:root{color-scheme:light;--paper:#f4f2eb;--panel:#fffefa;--ink:#202d35;--muted:#4b606a;--line:#d6ddd8;--teal:#006b62;--teal-bg:#e1f3ed;--amber:#9d480d;--amber-bg:#faebd9;--violet:#534693;--violet-bg:#eeebf8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 system-ui,"Yu Gothic",Meiryo,sans-serif}
+main{max-width:1440px;margin:auto;padding:30px clamp(14px,3vw,42px) 55px}
+header{display:flex;justify-content:space-between;align-items:end;gap:16px;border-bottom:1px solid #b9c4bd;padding-bottom:17px;margin-bottom:20px}
+h1,h2,p,figure{margin:0} h1{font-size:clamp(26px,4vw,44px);line-height:1.16;letter-spacing:-.035em} h2{font-size:19px;line-height:1.4}
+.subtitle{margin-top:9px;color:var(--muted)} .source{font-size:12px;white-space:nowrap;color:var(--muted)}
+.panel{border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.controls{display:grid;grid-template-columns:1fr 1.4fr 1.3fr;gap:18px;padding:17px 20px;margin-bottom:15px}
+.controls section+section{border-left:1px solid var(--line);padding-left:18px}
+.heading{display:block;font-size:13px;font-weight:750;margin-bottom:7px}
+select,input,button{font:inherit;color:inherit}
+select,input,button{border:1px solid #aebdb7;border-radius:7px;background:#fff;min-height:34px}
+select{padding:3px 7px;width:100%;max-width:265px}
+button{cursor:pointer;padding:3px 10px;font-size:13px;font-weight:650}
+button:hover{background:#ebf3ee} button:disabled{opacity:.5;cursor:default}
+button.primary{background:#164d47;color:#fff;border-color:#164d47}
+button.primary:hover{background:#20645d}
+button[aria-pressed=true]:not(.primary){background:#dceee8;border-color:#376d64;color:#164d47}
+:focus-visible{outline:3px solid #7965bb;outline-offset:2px}
+.row,.refine{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fixed-domain{font-size:16px;font-weight:700;margin-top:4px}
+.controls .small{margin-top:5px}
+.formula{font:17px/1.5 Georgia,"Yu Mincho",serif;margin-top:6px;overflow-wrap:anywhere}
+.small{font-size:12px;color:var(--muted)}
+#partition{font-weight:750;font-variant-numeric:tabular-nums;margin-bottom:5px}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.metric{padding:10px 15px;border:1px solid transparent;border-radius:11px;display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:700}
+.low{color:var(--teal);background:var(--teal-bg);border-color:#c8e5dc}.up{color:var(--amber);background:var(--amber-bg);border-color:#efd9be}.gap{color:var(--violet);background:var(--violet-bg);border-color:#ddd6f2}
+.metric-value{text-align:right;white-space:nowrap}.metric-change{display:block;font-size:11px;font-weight:600}
+.metric strong{font-size:clamp(17px,2.1vw,25px);font-variant-numeric:tabular-nums;white-space:nowrap}
+.workspace{padding:13px 14px 14px}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.toolbar label{font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer}
+.toolbar input{accent-color:var(--teal);min-height:0}
+.plot-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.plot-grid.single{grid-template-columns:1fr} [hidden]{display:none!important}
+.plot{border-radius:9px;overflow:hidden;background:#f7f9f6;border:1px solid #d8e2dc}
+.plot figcaption{padding:7px 12px;font-weight:750;font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:4px}
+.plot figcaption span{font-size:11px;font-weight:600}
+canvas{display:block;width:100%;height:clamp(245px,31vw,410px);touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:9px 1px 0}
+.sample{color:#394d57}.selected{color:var(--violet);font-weight:700}
+.below{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;margin-top:14px}
+.inside{padding:15px 17px}
+.inspector{display:grid;grid-template-columns:minmax(145px,.95fr) 1fr;gap:13px;align-items:start;margin-top:10px}
+#tiles{display:grid;aspect-ratio:1;background:#eef3ef;border:1px solid #cbd8d1;border-radius:6px}
+#tiles button{min-height:0;min-width:0;padding:0;border:0;border-radius:2px;box-shadow:inset 0 0 0 1px #c8d7d0;background:#dce9e2}
+#tiles button:hover{background:#c4d9cf}
+#tiles button[aria-pressed=true]{background:#6454a3;box-shadow:inset 0 0 0 1px #4c3d8a}
+.x-label{text-align:right;margin-top:2px}
+#tile-info{font-size:13px;overflow-wrap:anywhere}
+#tile-info strong{display:block;margin-bottom:4px}
+#tile-info p+p{margin-top:4px}
+.history{margin-top:8px}
+#chart{display:block;width:100%;height:auto;max-height:210px}
+#history-note{margin-top:2px}
+.definition{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.definition h2{margin-bottom:6px}.definition p+p{margin-top:7px}
+.result{padding:8px 11px;background:#edf2ee;border-radius:7px;font-weight:700;font-size:14px}
+details{margin-top:14px} summary{cursor:pointer;font-weight:700} details ol{margin:8px 0 0;padding-left:25px}
+@media(max-width:1050px){.controls{grid-template-columns:1fr 1.6fr}.controls section:last-child{grid-column:1/-1;border-left:0;border-top:1px solid var(--line);padding:9px 0 0;display:flex;flex-wrap:wrap;gap:5px 14px;align-items:center}.controls section:last-child>*{margin:0}}
+@media(max-width:680px){main{padding-top:18px}header{display:block}.source{margin-top:4px}.controls,.below,.definition{grid-template-columns:1fr}.controls section+section{border-left:0;border-top:1px solid var(--line);padding:8px 0 0}.controls{gap:10px;padding:12px}.metric{padding:7px;flex-direction:column;align-items:start;font-size:12px}.metric-value{text-align:left}.metrics{gap:5px}.plot-grid{gap:5px}.plot figcaption{padding:6px;font-size:12px}.plot figcaption span{display:none}.workspace{padding:8px}.inspector{grid-template-columns:1fr 1fr}}
+@media(max-width:430px){.plot-grid{grid-template-columns:1fr}canvas{height:235px}}
+</style>
+</head>
+<body>
+<main>
+<header><div><h1>柱で見る二変数関数の積分</h1><p class="subtitle">単位正方形をいろいろに分けて、過剰和と不足和の動きを見よう。</p></div><p class="source">多変数の微分積分 · 第16–17回</p></header>
+
+<div class="panel controls">
+<section>
+<label class="heading" for="function">関数 <i>f</i>(<i>x</i>, <i>y</i>)</label>
+<select id="function">
+<option value="plane">斜面（一次関数）</option>
+<option value="bowl">谷（内部にも最小値）</option>
+<option value="hill">山と谷（正負のある波）</option>
+<option value="step">段差（直線上で不連続）</option>
+<option value="dense">有理数で 1・無理数で 0</option>
+</select>
+<p class="formula" id="function-formula"></p>
+<p class="fixed-domain">積分区間 <i>I</i> = [0, 1]²</p>
+</section>
+<section>
+<span class="heading">分割線をランダムに動かす</span>
+<div class="row">
+<button class="primary" id="random-once">1回動かす</button>
+<button id="random-auto" aria-pressed="false">自動で動かす</button>
+</div>
+<p class="small">小区間の個数はそのまま。内側の分割線だけを少しずつ動かします。</p>
+</section>
+<section>
+<span class="heading">いまの分割を細分する</span>
+<p id="partition"></p>
+<div class="refine">
+<button id="refine-both">両方向を二等分</button>
+<button id="refine-x" aria-label="x 方向だけを二等分">x のみ</button>
+<button id="refine-y" aria-label="y 方向だけを二等分">y のみ</button>
+<button id="reset-grid">最初から試す</button>
+</div>
+</section>
+</div>
+
+<div class="metrics" id="metrics" aria-live="polite" aria-atomic="true">
+<div class="metric low"><span>不足和 <i>s</i>(<i>f</i>, Δ)</span><span class="metric-value"><strong id="lower"></strong><span class="metric-change" id="lower-change"></span></span></div>
+<div class="metric up"><span>過剰和 <i>S</i>(<i>f</i>, Δ)</span><span class="metric-value"><strong id="upper"></strong><span class="metric-change" id="upper-change"></span></span></div>
+<div class="metric gap"><span>差 <i>S</i> − <i>s</i></span><span class="metric-value"><strong id="gap"></strong><span class="metric-change" id="gap-change"></span></span></div>
+</div>
+
+<section class="panel workspace" aria-label="立体図">
+<div class="toolbar">
+<div class="row" role="group" aria-label="図の表示">
+<button id="compare" aria-pressed="true">不足和・過剰和を比較</button>
+<button id="difference" aria-pressed="false">すき間を見る</button>
+</div>
+<div class="row">
+<label><input type="checkbox" id="surface" checked> 関数のグラフを重ねる</label>
+<button id="rotate-left" aria-label="左へ回転">↶</button>
+<button id="rotate-right" aria-label="右へ回転">↷</button>
+<button id="reset-view">視点を戻す</button>
+</div>
+</div>
+<div id="compare-plots" class="plot-grid">
+<figure class="plot"><figcaption class="low">不足和 <span>各小区間の下限 mₖ</span></figcaption><canvas id="lower-plot" role="img" aria-label="不足和の柱と関数のグラフ"></canvas></figure>
+<figure class="plot"><figcaption class="up">過剰和 <span>各小区間の上限 Mₖ</span></figcaption><canvas id="upper-plot" role="img" aria-label="過剰和の柱と関数のグラフ"></canvas></figure>
+</div>
+<div id="difference-plot" class="plot-grid single" hidden>
+<figure class="plot"><figcaption class="gap">過剰和と不足和のすき間 <span>各小区間で mₖ から Mₖ まで</span></figcaption><canvas id="gap-plot" role="img" aria-label="下限と上限の間を埋める柱"></canvas></figure>
+</div>
+<p class="small legend"><span class="sample" id="surface-legend">濃い線は関数のグラフ</span><span class="selected" id="selected-legend">紫の輪郭は選んだ小区間</span><span>ドラッグで回転 · 左右の視点は連動</span><span id="signed-note"></span></p>
+</section>
+
+<div class="below">
+<section class="panel inside">
+<h2>小区間を一つ選ぶ</h2>
+<div class="inspector">
+<div><div class="small" id="grid-caption">y ↑</div><div id="tiles" role="group" aria-label="長方形の分割" aria-describedby="grid-caption"></div><p class="small x-label">x →</p></div>
+<div id="tile-info" aria-live="polite"></div>
+</div>
+</section>
+<section class="panel inside">
+<h2>分割を変えると、和はどう動く？</h2>
+<div class="history">
+<svg id="chart" viewBox="0 0 410 174" role="img" aria-labelledby="chart-title chart-description"><title id="chart-title">分割ごとの過剰和と不足和</title><desc id="chart-description"></desc><g id="chart-body"></g></svg>
+<p class="small" id="history-note"></p>
+<p class="small">横の破線は上積分・下積分（一致すれば1本）。</p>
+<p id="best-tried" class="result"></p>
+</div>
+</section>
+</div>
+
+<section class="panel inside definition">
+<div>
+<h2>一つの分割から、すべての分割へ</h2>
+<p>面積が |<i>I</i>ₖ| の小区間ごとに、下限 <i>m</i>ₖ と上限 <i>M</i>ₖ を求めます。<i>s</i>(<i>f</i>, Δ) = Σ <i>m</i>ₖ|<i>I</i>ₖ|、<i>S</i>(<i>f</i>, Δ) = Σ <i>M</i>ₖ|<i>I</i>ₖ| です。</p>
+<p><strong>下積分 = sup<sub>Δ</sub> s(f, Δ)</strong>、<strong>上積分 = inf<sub>Δ</sub> S(f, Δ)</strong>。ここで Δ は区間 <i>I</i> の<strong>すべての分割</strong>を動きます。両者が一致するとき、共通の値が積分です。</p>
+<p class="small">分割線を動かすと、和は増えることも減ることもあります。もとの分割線を残して細分すると、不足和は減らず、過剰和は増えません。任意に小さい ε &gt; 0 に対し、<i>S</i> − <i>s</i> &lt; ε となる分割が取れることと、積分可能性は同値です。</p>
+</div>
+<div>
+<h2>この関数・区間での上積分と下積分</h2>
+<p id="exact-result" class="result"></p>
+<p class="small" id="reason"></p>
+</div>
+</section>
+
+<details class="panel inside">
+<summary>授業で試す3つの操作</summary>
+<ol>
+<li>斜面で「自動で動かす」を押し、不足和も過剰和も増えたり減ったりすることを確かめる。</li>
+<li>自動を止めて「両方向を二等分」を押す。今度はどちらの和が増え、どちらが減るか。「これまでの最大の不足和・最小の過剰和」も見比べる。</li>
+<li>段差で「y のみ」と「x のみ」を比べる。次に有理数・無理数の例で分割線を動かし、どの小区間でも上限と下限が変わらない理由を説明する。</li>
+</ol>
+</details>
+</main>
+<script>
+'use strict';
+
+const get = id => document.getElementById(id);
+const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+const mix = (a, b, t) => a + (b - a) * t;
+const clean = x => Object.is(x, -0) ? 0 : x;
+const number = x => {
+  x = clean(x);
+  const magnitude = Math.abs(x);
+  return magnitude && (magnitude < 0.00001 || magnitude > 1e6)
+    ? x.toExponential(3) : Number(x.toPrecision(7)).toLocaleString('en-US', {maximumFractionDigits: 12});
+};
+const rawRange = (a, b) => [Math.min(a, b), Math.max(a, b)];
+const squareRange = (a, b, center) => [
+  (clamp(center, a, b) - center) ** 2,
+  Math.max((a - center) ** 2, (b - center) ** 2)
+];
+function waveRange(a, b, shift) {
+  const wave = x => Math.sin(Math.PI * (x + shift));
+  let [lo, hi] = rawRange(wave(a), wave(b));
+  const contains = offset => Math.ceil((a + shift - offset) / 2) <= Math.floor((b + shift - offset) / 2);
+  if (contains(0.5)) hi = 1;
+  if (contains(-0.5)) lo = -1;
+  return [lo, hi];
+}
+const continuous = '閉長方形上で連続なので、十分細かく分けると各小区間での振幅 Mₖ − mₖ を一様に小さくできます。';
+function averageSquare(a, b, center) {
+  const u = a - center;
+  const v = b - center;
+  return (u * u + u * v + v * v) / 3;
+}
+function averageWave(a, b, shift) {
+  const halfWidth = Math.PI * (b - a) / 2;
+  return Math.sin(Math.PI * (mix(a, b, 0.5) + shift)) * (Math.sin(halfWidth) / halfWidth);
+}
+const jumpX = 0.45;
+const functions = {
+  plane: {
+    formula: '1.8 + 0.55x + 0.35y',
+    value: (x, y) => 1.8 + 0.55 * x + 0.35 * y,
+    range: (a, b, c, d) => [functions.plane.value(a, c), functions.plane.value(b, d)],
+    mean: (a, b, c, d) => functions.plane.value(mix(a, b, 0.5), mix(c, d, 0.5)),
+    reason: continuous
+  },
+  bowl: {
+    formula: '0.3 + 0.55(x − 0.3)² + 0.4(y − 0.4)²',
+    value: (x, y) => 0.3 + 0.55 * (x - 0.3) ** 2 + 0.4 * (y - 0.4) ** 2,
+    range(a, b, c, d) {
+      const xr = squareRange(a, b, 0.3), yr = squareRange(c, d, 0.4);
+      return xr.map((v, i) => 0.3 + 0.55 * v + 0.4 * yr[i]);
+    },
+    mean: (a, b, c, d) => 0.3 + 0.55 * averageSquare(a, b, 0.3) + 0.4 * averageSquare(c, d, 0.4),
+    reason: continuous
+  },
+  hill: {
+    formula: 'sin(πx) + 0.65 cos(πy)',
+    value: (x, y) => Math.sin(Math.PI * x) + 0.65 * Math.cos(Math.PI * y),
+    range(a, b, c, d) {
+      const xr = waveRange(a, b, 0), yr = waveRange(c, d, 0.5);
+      return xr.map((v, i) => v + 0.65 * yr[i]);
+    },
+    mean: (a, b, c, d) => averageWave(a, b, 0) + 0.65 * averageWave(c, d, 0.5),
+    reason: continuous
+  },
+  step: {
+    formula: 'x < 0.45 で 0.2、x ≥ 0.45 で 1.2',
+    value: x => x < jumpX ? 0.2 : 1.2,
+    range: (a, b) => [functions.step.value(a), functions.step.value(b)],
+    mean: (a, b) => 0.2 + Math.max(0, b - Math.max(jumpX, a)) / (b - a),
+    reason: '段差を拾うのは x = 0.45 をまたぐ列です。分割線が段差と重なる場合は、そのすぐ左の列が段差を拾います。その列の幅を小さくすれば、過剰和と不足和の差も小さくできます。'
+  },
+  dense: {formula: 'x ∈ ℚ で 1、x ∉ ℚ で 0', range: () => [0, 1],
+    reason: 'どの小区間にも有理数の x と無理数の x があるため、下限は 0、上限は 1。差はどの分割でも区間の面積 1 です。'}
+};
+
+const bounds = [0, 1, 0, 1];
+const initialXs = [0, 0.34, 1], initialYs = [0, 0.62, 1];
+const state = {
+  xs: initialXs, ys: initialYs, ix: 0, iy: 0, history: [],
+  angle: -0.59, elevation: 0.60
+};
+const cellLimit = 32;
+const recentLimit = 16;
+let randomTimer = null;
+const fKey = () => get('function').value;
+const current = () => functions[fKey()];
+const appPlots = [['lower-plot', 'low'], ['upper-plot', 'up'], ['gap-plot', 'gap']];
+
+function makeCells(xs, ys, f) {
+  const nx = xs.length - 1, ny = ys.length - 1;
+  const cells = [];
+  let low = 0, up = 0, gap = 0;
+  for (let j = 0; j < ny; j++) {
+    for (let i = 0; i < nx; i++) {
+      const x0 = xs[i], x1 = xs[i + 1], y0 = ys[j], y1 = ys[j + 1];
+      const [m, M] = f.range(x0, x1, y0, y1);
+      const area = (x1 - x0) * (y1 - y0);
+      cells.push({i, j, x0, x1, y0, y1, m, M, area});
+      low += m * area;
+      up += M * area;
+      gap += (M - m) * area;
+    }
+  }
+  return {cells, nx, ny, low, up, gap};
+}
+
+function recompute(action, restart = false) {
+  state.data = makeCells(state.xs, state.ys, current());
+  if (restart) {
+    state.history = [];
+    state.trials = 0;
+    state.bestLow = -Infinity;
+    state.bestUp = Infinity;
+  }
+  const {nx, ny, low, up, gap} = state.data;
+  const previous = state.history.at(-1);
+  state.history.push({nx, ny, low, up, gap, action, trial: ++state.trials});
+  if (state.history.length > recentLimit) state.history.shift();
+  state.bestLow = Math.max(state.bestLow, low);
+  state.bestUp = Math.min(state.bestUp, up);
+
+  get('function-formula').textContent = current().formula;
+  get('partition').textContent = nx + ' × ' + ny + ' ＝ ' + (nx * ny) + ' 個';
+  for (const [id, key, value] of [['lower','low',low], ['upper','up',up], ['gap','gap',gap]]) {
+    get(id).textContent = number(value);
+    const diff = value - previous?.[key];
+    get(id + '-change').textContent = !previous ? '記録開始'
+      : Math.abs(diff) < 1e-12 ? '前回と同じ'
+      : '前回比 ' + (diff < 0 ? '−' : '+') + number(Math.abs(diff));
+  }
+  get('refine-both').disabled = nx >= cellLimit || ny >= cellLimit;
+  get('refine-x').disabled = nx >= cellLimit;
+  get('refine-y').disabled = ny >= cellLimit;
+  const integral = current().mean ? current().mean(...bounds) : null;
+  state.integrals = integral === null ? [0, 1] : [integral, integral];
+  get('exact-result').textContent = integral === null
+    ? '下積分 ＝ 0　｜　上積分 ＝ 1'
+    : '下積分 ＝ 上積分 ≈ ' + number(integral);
+  get('reason').textContent = current().reason + (current().mean ? ' 表示値は関数の式から求めた積分値を丸めたものです。' : '');
+  get('signed-note').textContent = current().range(...bounds)[0] < 0 ? 'z = 0 より下の柱は体積を負として計算' : '';
+  get('surface-legend').textContent = fKey() === 'dense' ? '破線の2面は、グラフがそれぞれ稠密な高さ' : '濃い線は関数のグラフ';
+  get('surface-legend').hidden = !get('surface').checked;
+  buildTiles();
+  updateTile();
+  drawHistory();
+}
+
+function stopRandom() {
+  if (randomTimer === null) return;
+  clearInterval(randomTimer);
+  randomTimer = null;
+  get('random-auto').textContent = '自動で動かす';
+  get('random-auto').setAttribute('aria-pressed', false);
+  get('random-once').disabled = false;
+  get('metrics').setAttribute('aria-live', 'polite');
+  get('tile-info').setAttribute('aria-live', 'polite');
+}
+
+function moveCuts(cuts) {
+  // Both adjacent cuts can move into a cell. Leave a minimum width even then.
+  const minimumWidth = 0.08 / (cuts.length - 1);
+  return cuts.map((cut, i) => {
+    if (i === 0 || i === cuts.length - 1) return cut;
+    const left = Math.max(0, cut - cuts[i-1] - minimumWidth);
+    const right = Math.max(0, cuts[i+1] - cut - minimumWidth);
+    return cut + 0.28 * mix(-left, right, Math.random());
+  });
+}
+function randomMove() {
+  state.xs = moveCuts(state.xs);
+  state.ys = moveCuts(state.ys);
+  recompute('分割線を移動');
+}
+get('random-once').onclick = randomMove;
+get('random-auto').onclick = () => {
+  if (randomTimer !== null) {
+    stopRandom();
+    return;
+  }
+  get('random-auto').textContent = '自動を止める';
+  get('random-auto').setAttribute('aria-pressed', true);
+  get('random-once').disabled = true;
+  get('metrics').setAttribute('aria-live', 'off');
+  get('tile-info').setAttribute('aria-live', 'off');
+  randomMove();
+  randomTimer = setInterval(randomMove, 850);
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopRandom();
+});
+
+function splitCuts(cuts) {
+  return cuts.flatMap((cut, i) => i === 0 ? [cut] : [mix(cuts[i-1], cut, 0.5), cut]);
+}
+function refine(x, y) {
+  stopRandom();
+  if (x) {
+    state.xs = splitCuts(state.xs);
+    state.ix *= 2;
+  }
+  if (y) {
+    state.ys = splitCuts(state.ys);
+    state.iy *= 2;
+  }
+  recompute('細分');
+}
+get('refine-both').onclick = () => refine(true, true);
+get('refine-x').onclick = () => refine(true, false);
+get('refine-y').onclick = () => refine(false, true);
+get('reset-grid').onclick = () => {
+  stopRandom();
+  state.xs = initialXs;
+  state.ys = initialYs;
+  state.ix = state.iy = 0;
+  recompute('最初の分割', true);
+};
+get('function').addEventListener('change', () => {
+  stopRandom();
+  recompute('関数を変更', true);
+});
+
+function buildTiles() {
+  const grid = get('tiles');
+  const {nx, ny} = state.data;
+  const widths = cuts => cuts.slice(1).map((cut, i) => (cut - cuts[i]) + 'fr');
+  grid.style.gridTemplateColumns = widths(state.xs).join(' ');
+  grid.style.gridTemplateRows = widths(state.ys).reverse().join(' ');
+  if (grid.dataset.shape === nx + '×' + ny) return;
+  grid.dataset.shape = nx + '×' + ny;
+  const buttons = document.createDocumentFragment();
+  for (let j = ny - 1; j >= 0; j--) {
+    for (let i = 0; i < nx; i++) {
+      const button = document.createElement('button');
+      button.id = 'cell-' + i + '-' + j;
+      button.dataset.i = i;
+      button.dataset.j = j;
+      button.title = 'x 方向 ' + (i + 1) + '、y 方向 ' + (j + 1);
+      button.setAttribute('aria-label', button.title);
+      buttons.append(button);
+    }
+  }
+  grid.replaceChildren(buttons);
+}
+function updateTile() {
+  const {i, j, x0, x1, y0, y1, m, M, area} = state.data.cells[state.iy * state.data.nx + state.ix];
+  for (const button of get('tiles').children) {
+    const chosen = button.id === 'cell-' + i + '-' + j;
+    button.tabIndex = chosen ? 0 : -1;
+    button.setAttribute('aria-pressed', chosen);
+  }
+  const interval = (a, b) => '[' + number(a) + ', ' + number(b) + ']';
+  get('tile-info').innerHTML = '<strong>' + interval(x0, x1) + ' × ' + interval(y0, y1) + '</strong>'
+    + '<p>底面積 |<i>I</i>ₖ| ≈ ' + number(area) + '</p>'
+    + '<p><span class="selected" style="color:var(--teal)">下限 <i>m</i>ₖ ≈ ' + number(m) + '</span>　→　<i>m</i>ₖ|<i>I</i>ₖ| ≈ ' + number(m * area) + '</p>'
+    + '<p><span class="selected" style="color:var(--amber)">上限 <i>M</i>ₖ ≈ ' + number(M) + '</span>　→　<i>M</i>ₖ|<i>I</i>ₖ| ≈ ' + number(M * area) + '</p>';
+  schedule();
+}
+get('tiles').addEventListener('click', event => {
+  const button = event.target.closest('button');
+  if (!button) return;
+  state.ix = Number(button.dataset.i);
+  state.iy = Number(button.dataset.j);
+  updateTile();
+});
+get('tiles').addEventListener('keydown', event => {
+  const moves = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowDown: [0, -1], ArrowUp: [0, 1]};
+  if (!moves[event.key]) return;
+  event.preventDefault();
+  const [dx, dy] = moves[event.key];
+  state.ix = clamp(state.ix + dx, 0, state.data.nx - 1);
+  state.iy = clamp(state.iy + dy, 0, state.data.ny - 1);
+  updateTile();
+  get('cell-' + state.ix + '-' + state.iy).focus();
+});
+
+function drawHistory() {
+  const history = state.history;
+  const earliest = history[0], latest = history.at(-1);
+  const min = Math.min(state.integrals[0], ...history.map(r => r.low));
+  const max = Math.max(state.integrals[1], ...history.map(r => r.up));
+  const padding = (max - min) * 0.12 || 0.01;
+  const lower = min - padding, upper = max + padding;
+  const px = i => history.length === 1 ? 162 : mix(86, 382, i / (history.length - 1));
+  const py = value => mix(133, 15, (value - lower) / (upper - lower));
+  let markup = '';
+  for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
+    const value = mix(lower, upper, fraction), y = py(value);
+    markup += '<line x1="68" x2="397" y1="' + y + '" y2="' + y + '" stroke="#dbe3dc"/>'
+      + '<text x="63" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="#4b606a">' + number(value) + '</text>';
+  }
+  for (const value of new Set(state.integrals)) {
+    const y = py(value);
+    markup += '<line x1="68" x2="397" y1="' + y + '" y2="' + y + '" stroke="#685291" stroke-dasharray="5 4"/>';
+  }
+  markup += '<polyline fill="none" stroke="#006b62" stroke-width="2" points="' + history.map((r, i) => px(i) + ',' + py(r.low)).join(' ') + '"/>'
+    + '<polyline fill="none" stroke="#a0501c" stroke-width="2" points="' + history.map((r, i) => px(i) + ',' + py(r.up)).join(' ') + '"/>';
+  history.forEach((record, i) => {
+    const x = px(i), y1 = py(record.up), y2 = py(record.low);
+    const color = record.action === '細分' ? '#455b71' : '#a397cd';
+    markup += '<g><title>' + record.trial + '回目・' + record.action + '（' + record.nx + '×' + record.ny + '） 不足和 '
+      + number(record.low) + '、過剰和 ' + number(record.up) + '</title>'
+      + '<line x1="' + x + '" x2="' + x + '" y1="' + y1 + '" y2="' + y2 + '" stroke="' + color + '" stroke-width="3"/>'
+      + '<circle cx="' + x + '" cy="' + y1 + '" r="3.6" fill="#a0501c"/><circle cx="' + x + '" cy="' + y2 + '" r="3.2" fill="#006b62"/>';
+    if (history.length <= 8 || i === 0 || i === history.length - 1 || i % 3 === 0) {
+      markup += '<text x="' + x + '" y="153" text-anchor="middle" font-size="10" fill="#31464e">' + record.trial + '</text>';
+    }
+    markup += '</g>';
+  });
+  get('chart-body').innerHTML = markup;
+  get('chart-description').textContent = history.map(r => r.trial + '回目、' + r.action + '、' + r.nx + '×' + r.ny
+    + '、不足和 ' + number(r.low) + '、過剰和 ' + number(r.up)).join('。') + '。' + get('exact-result').textContent;
+  const shown = earliest.trial === latest.trial ? latest.trial : earliest.trial + '〜' + latest.trial;
+  get('history-note').textContent = '横軸は試行回数（' + shown + '回目）。濃い縦線は細分。最新は「' + latest.action + '」。';
+  get('best-tried').textContent = 'これまでの最大の不足和 ' + number(state.bestLow) + ' ／ 最小の過剰和 ' + number(state.bestUp);
+}
+
+const colors = {
+  low: {top: '#92d3bf', x: '#52a893', y: '#72bca9', edge: '#336b61'},
+  up: {top: '#f6ce9a', x: '#dc995b', y: '#edb47c', edge: '#95633c'},
+  gap: {top: '#c6b9e9', x: '#917fc7', y: '#ac9bd9', edge: '#61518f'}
+};
+function rectangle(x0, x1, y0, y1, z) {
+  return [[x0,y0,z],[x1,y0,z],[x1,y1,z],[x0,y1,z]];
+}
+let frame;
+function schedule() {
+  if (frame) return;
+  frame = requestAnimationFrame(() => {
+    frame = null;
+    for (const [id, mode] of appPlots) drawPlot(get(id), mode);
+  });
+}
+
+function drawPlot(canvas, mode) {
+  const {width, height} = canvas.getBoundingClientRect();
+  if (!width || !height) return;
+  const ratio = window.devicePixelRatio || 1;
+  if (canvas.width !== Math.round(width * ratio)) canvas.width = Math.round(width * ratio);
+  if (canvas.height !== Math.round(height * ratio)) canvas.height = Math.round(height * ratio);
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, width, height);
+  const [a,b,c,d] = bounds;
+  const [min,max] = current().range(a,b,c,d);
+  const lo = Math.min(0,min), hi = Math.max(0,max);
+  const horizontal = Math.max(b-a,d-c);
+  const middleX = mix(a,b,0.5), middleY = mix(c,d,0.5);
+  const ca = Math.cos(state.angle), sa = Math.sin(state.angle);
+  const ce = Math.cos(state.elevation), se = Math.sin(state.elevation);
+  const zScale = 0.74 / (hi - lo || 1);
+  const depth = (x,y) => (x-middleX)*sa/horizontal + (y-middleY)*ca/horizontal;
+  const viewing = (x,y,z) => [
+    (x-middleX)*ca/horizontal - (y-middleY)*sa/horizontal,
+    depth(x,y)*se - (z-lo)*zScale*ce
+  ];
+  const corners = [...rectangle(a,b,c,d,lo), ...rectangle(a,b,c,d,hi)].map(p => viewing(...p));
+  const u = corners.map(p => p[0]), v = corners.map(p => p[1]);
+  const u0 = Math.min(...u), u1 = Math.max(...u), v0 = Math.min(...v), v1 = Math.max(...v);
+  const scale = Math.min((width-46)/(u1-u0 || 1), (height-54)/(v1-v0 || 1));
+  function project(point) {
+    const [x,y] = viewing(...point);
+    return [width/2+(x-(u0+u1)/2)*scale, height/2+(y-(v0+v1)/2)*scale];
+  }
+  function stroke(points, color, lineWidth = 1, fill, close = false) {
+    ctx.beginPath();
+    points.map(project).forEach(([x,y], i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
+    if (close) ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  stroke(rectangle(a,b,c,d,0), '#91a7a0', 1.1, '#e5ede8', true);
+  const {xs,ys} = state;
+  const {cells} = state.data;
+  for (const x of xs) stroke([[x,c,0],[x,d,0]], '#b8c9c0', 0.7);
+  for (const y of ys) stroke([[a,y,0],[b,y,0]], '#b8c9c0', 0.7);
+
+  const palette = colors[mode];
+  const ordered = cells.map(cell => ({cell, depth:depth(mix(cell.x0,cell.x1,0.5),mix(cell.y0,cell.y1,0.5))}))
+    .sort((left,right) => left.depth-right.depth);
+  const selection = cells[state.iy * state.data.nx + state.ix];
+  const heights = ({m,M}) => mode === 'low' ? rawRange(0,m) : mode === 'up' ? rawRange(0,M) : [m,M];
+  for (const {cell} of ordered) {
+    const {x0,x1,y0,y1} = cell;
+    const [floor,roof] = heights(cell);
+    if (floor === roof) continue;
+    const bottom = rectangle(x0,x1,y0,y1,floor);
+    const top = rectangle(x0,x1,y0,y1,roof);
+    const sides = [
+      [sa >= 0 ? [1,2] : [0,3], palette.x],
+      [ca >= 0 ? [2,3] : [0,1], palette.y]
+    ];
+    if (mode !== 'gap' && roof <= 0) ctx.globalAlpha = 0.67;
+    for (const [[i,j],fill] of sides) stroke([bottom[i],bottom[j],top[j],top[i]], palette.edge, .7, fill, true);
+    stroke(top,palette.edge,.75,palette.top,true);
+    ctx.globalAlpha = 1;
+  }
+
+  if (get('surface').checked) {
+    const wire = '#223841';
+    if (fKey() === 'dense') {
+      ctx.setLineDash([5,4]);
+      for (const z of [0,1]) stroke(rectangle(a,b,c,d,z), wire, 1.3, null, true);
+      ctx.setLineDash([]);
+    } else if (fKey() === 'step') {
+      const leftEnd = jumpX - 1/440;
+      for (const y of [c,mix(c,d,.5),d]) {
+        stroke([[a,y,.2],[leftEnd,y,.2]],wire,1.15);
+        stroke([[jumpX,y,1.2],[b,y,1.2]],wire,1.15);
+      }
+      stroke([[a,c,.2],[a,d,.2]],wire,1.15);
+      for (const x of [jumpX,b]) stroke([[x,c,1.2],[x,d,1.2]],wire,1.15);
+    } else {
+      const steps = 48;
+      const lines = 10;
+      const f = current().value;
+      ctx.globalAlpha = .82;
+      for (let i = 0; i <= lines; i++) {
+        const x = mix(a,b,i/lines), y = mix(c,d,i/lines);
+        const xLine = [], yLine = [];
+        for (let j = 0; j <= steps; j++) {
+          const t = j/steps, xp = mix(a,b,t), yp = mix(c,d,t);
+          xLine.push([xp,y,f(xp,y)]);
+          yLine.push([x,yp,f(x,yp)]);
+        }
+        stroke(xLine,wire,.9);
+        stroke(yLine,wire,.9);
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  const {x0,x1,y0,y1,m,M} = selection;
+  const [floor,roof] = heights(selection);
+  const outline = '#58439c';
+  if (floor !== roof) {
+    ctx.setLineDash([4,3]);
+    if (mode === 'gap') stroke(rectangle(x0,x1,y0,y1,floor),outline,1.4,null,true);
+    for (const [x,y] of [[x0,y0],[x1,y0],[x1,y1],[x0,y1]]) {
+      stroke([[x,y,floor],[x,y,roof]], outline, 1.25);
+    }
+    ctx.setLineDash([]);
+  }
+  stroke(rectangle(x0,x1,y0,y1,mode === 'low' ? m : M),outline,2,null,true);
+
+  ctx.font = '600 12px system-ui, sans-serif';
+  ctx.fillStyle = '#40545a';
+  const label = (point, text, dx, dy, align = 'left') => {
+    const [x,y] = project(point);
+    ctx.textAlign = align;
+    ctx.strokeStyle = '#f7f9f6';
+    ctx.lineWidth = 3.5;
+    ctx.strokeText(text,x+dx,y+dy);
+    ctx.fillText(text,x+dx,y+dy);
+  };
+  const origin = [a,c,0], xTip = [b,c,0], yTip = [a,d,0];
+  stroke([xTip,origin,yTip], '#4d6562', 1.45);
+  const originScreen = project(origin);
+  const tips = [[xTip,'x'],[yTip,'y']].map(([point,axis]) => {
+    const end = project(point);
+    const dx = end[0]-originScreen[0], dy = end[1]-originScreen[1], norm = Math.hypot(dx,dy) || 1;
+    return {point,axis,dx:dx/norm*10,dy:dy/norm*9+4,end};
+  });
+  const labelGap = Math.hypot(tips[0].end[0]+tips[0].dx-tips[1].end[0]-tips[1].dx, tips[0].end[1]+tips[0].dy-tips[1].end[1]-tips[1].dy);
+  if (labelGap < 19) tips[1].dy += 16;
+  for (const tip of tips) label(tip.point,tip.axis,tip.dx,tip.dy,'center');
+  ctx.setLineDash([3,4]);
+  stroke([[a,c,lo],[a,c,hi]], '#4d6562', 1);
+  ctx.setLineDash([]);
+  label([a,c,hi],'z',-7,-7,'right');
+}
+
+function rotate(delta, vertical = 0) {
+  state.angle += delta;
+  state.elevation = clamp(state.elevation + vertical, 0.22, 1.35);
+  schedule();
+}
+for (const [id] of appPlots) {
+  const canvas = get(id);
+  let drag;
+  canvas.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || drag) return;
+    canvas.setPointerCapture(event.pointerId);
+    drag = {id:event.pointerId,x:event.clientX,y:event.clientY};
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (!drag || drag.id !== event.pointerId) return;
+    rotate((event.clientX-drag.x)*.012,(event.clientY-drag.y)*.008);
+    drag.x = event.clientX;
+    drag.y = event.clientY;
+  });
+  canvas.addEventListener('lostpointercapture', () => { drag = null; });
+}
+function showDifference(show) {
+  get('compare-plots').hidden = show;
+  get('difference-plot').hidden = !show;
+  get('compare').setAttribute('aria-pressed',!show);
+  get('difference').setAttribute('aria-pressed',show);
+  schedule();
+}
+get('compare').onclick = () => showDifference(false);
+get('difference').onclick = () => showDifference(true);
+get('surface').onchange = () => {
+  get('surface-legend').hidden = !get('surface').checked;
+  schedule();
+};
+get('rotate-left').onclick = () => rotate(-.24);
+get('rotate-right').onclick = () => rotate(.24);
+get('reset-view').onclick = () => {
+  state.angle = -.59;
+  state.elevation = .60;
+  schedule();
+};
+new ResizeObserver(schedule).observe(get('compare-plots').parentNode);
+recompute('最初の分割', true);
+</script>
+</body>
+</html>
